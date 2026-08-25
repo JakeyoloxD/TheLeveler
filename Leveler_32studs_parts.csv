@@ -1,0 +1,45 @@
+BLItemNo,PartName,Colour,LDrawColour,Qty
+3005,Brick 1 x 1,Black,0,56
+3005,Brick 1 x 1,Dark Bluish Gray,72,51
+3004,Brick 1 x 2,Black,0,45
+3004,Brick 1 x 2,Dark Bluish Gray,72,38
+3005,Brick 1 x 1,Dark Orange,484,31
+3622,Brick 1 x 3,Dark Bluish Gray,72,27
+3004,Brick 1 x 2,Dark Orange,484,22
+3622,Brick 1 x 3,Black,0,21
+3010,Brick 1 x 4,Dark Bluish Gray,72,19
+3622,Brick 1 x 3,Dark Orange,484,17
+3004,Brick 1 x 2,Light Bluish Gray,71,13
+3005,Brick 1 x 1,Light Bluish Gray,71,13
+3002,Brick 2 x 3,Dark Bluish Gray,72,12
+3010,Brick 1 x 4,Black,0,11
+3010,Brick 1 x 4,Dark Orange,484,11
+3003,Brick 2 x 2,Black,0,11
+3009,Brick 1 x 6,Dark Orange,484,8
+2456,Brick 2 x 6,Dark Bluish Gray,72,7
+3622,Brick 1 x 3,Light Bluish Gray,71,7
+3001,Brick 2 x 4,Dark Bluish Gray,72,6
+3003,Brick 2 x 2,Dark Bluish Gray,72,6
+3006,Brick 2 x 10,Dark Bluish Gray,72,5
+6111,Brick 1 x 10,Dark Bluish Gray,72,5
+3009,Brick 1 x 6,Black,0,5
+3009,Brick 1 x 6,Dark Bluish Gray,72,5
+3001,Brick 2 x 4,Dark Orange,484,5
+2456,Brick 2 x 6,Black,0,3
+3002,Brick 2 x 3,Dark Orange,484,3
+3005,Brick 1 x 1,Dark Brown,308,3
+6112,Brick 1 x 12,Black,0,2
+3006,Brick 2 x 10,Black,0,2
+3008,Brick 1 x 8,Black,0,2
+3008,Brick 1 x 8,Dark Bluish Gray,72,2
+2465,Brick 1 x 16,Dark Bluish Gray,72,2
+3010,Brick 1 x 4,Red,4,2
+3002,Brick 2 x 3,Black,0,2
+3002,Brick 2 x 3,Light Bluish Gray,71,2
+3003,Brick 2 x 2,Light Bluish Gray,71,2
+6112,Brick 1 x 12,Dark Bluish Gray,72,1
+2456,Brick 2 x 6,Dark Orange,484,1
+3005,Brick 1 x 1,Dark Red,320,1
+3003,Brick 2 x 2,Dark Orange,484,1
+3005,Brick 1 x 1,Light Aqua,323,1
+3004,Brick 1 x 2,Dark Brown,308,1

@@ -1,293 +1,424 @@
-# 3D model to LEGO build: a pipeline spec
+# README — Turning a 3D model into a real LEGO build
 
-Paste this whole file to your AI, attach your 3D model, and say:
+Australian edition. Prices in AUD at 1 USD = 1.40.
 
-> Run this pipeline on the attached model. Target <N> studs on the long axis.
+You have a folder of files and no idea what to open them with. This tells
+you what to download, in what order, and exactly what to do with each file.
 
-It works on any OBJ or STL. It has been run end to end and every constant
-below is measured, not guessed.
-
----
-
-## What you get
-
-1. An OBJ with real LEGO colours baked in
-2. A buildable model as an LDraw `.ldr`
-3. A parts list as CSV with BrickLink item numbers you can order from
-4. Building instructions, auto-generated, as a sectioned `.mpd`
+Everything in the required list is **free**.
 
 ---
 
-## Stage 0: inspect before doing anything
+# 1. What to download
 
-Report before writing any code:
+## Required
 
-- vertex, face, UV counts
-- bounding box on all three axes, and which axis is up
-- group and material names
-- whether an `.mtl` was supplied
-- whether faces carry valid `vt` indices
+### Bricklink Studio 2.0
 
-**Two things go wrong here almost every time.**
+The main tool. Free, made by BrickLink (owned by LEGO). Windows and macOS.
 
-Models downloaded from Sketchfab and similar sites often ship the OBJ with
-no MTL. Separately, even when the MTL exists it usually holds two or three
-materials while all the actual colour lives in a texture atlas addressed by
-UVs. Either way, importing "with colours" gives a three-tone model.
+- **Get it:** https://www.bricklink.com/v3/studio/download.page
+- **Size:** about 2 GB installed (it bundles the whole parts library)
+- **Account:** not needed to install, but make a free BrickLink account
+  anyway — you need one to order parts later
 
-If there are UVs and a texture, go to Stage 1. If there are neither, the
-model is colourless and the user picks colours by hand.
+Studio does four jobs for you:
+
+1. Opens `.obj` files and turns them into LEGO bricks
+2. Opens `.ldr` and `.mpd` LEGO models
+3. Generates building instructions as a PDF
+4. Exports a shopping list you can order from
+
+**Install notes:** accept the default install path. Do not install it into a
+folder with unusual characters in the name. It bundles its own copy of the
+LDraw parts library, so you do not need to download that separately.
+
+### A free Rebrickable account
+
+A website, nothing to install.
+
+- **Get it:** https://rebrickable.com
+
+You need this for one thing, and it is the single biggest money saver in the
+whole process: **Multi-Buy**, which works out the cheapest way to split your
+order across BrickLink stores including postage.
+
+### A free BrickLink account
+
+- **Get it:** https://www.bricklink.com
+
+This is where you actually buy the parts. It is a marketplace of thousands
+of independent sellers, not one shop.
+
+## Optional but worth it
+
+### LPub3D
+
+Free and open source. Makes much better instructions than Studio: proper
+part callouts, a running bill of materials, a cover page, page numbers.
+
+- **Get it:** https://trevorsandy.github.io/lpub3d/
+- **Also on:** https://sourceforge.net/projects/lpub3d/
+- Windows, macOS, Linux
+
+<cite index="72-1">It ships with the LDraw part libraries already bundled and
+integrated, and exports to OBJ, 3DS, STL, DAE, CSV and BrickLink XML.</cite>
+So you do not need a separate LDraw install for it either.
+
+More setup than Studio. Better output. Use Studio first, come back to this
+if you want the instructions to look professional.
+
+### LeoCAD
+
+Free, open source, lightweight. Opens `.ldr` and `.mpd` much faster than
+Studio if you just want a quick look.
+
+- **Get it:** https://www.leocad.org
+
+### A text editor
+
+`.obj`, `.ldr` and `.mpd` are all plain text. Being able to open and search
+them is genuinely useful when something looks wrong.
+
+- Notepad++ (Windows): https://notepad-plus-plus.org
+- VS Code (any OS): https://code.visualstudio.com
+- Windows Notepad works, but chokes on big files
+
+### Blender
+
+Only if you want to edit the 3D mesh itself before converting it.
+
+- **Get it:** https://www.blender.org
+
+## Do NOT bother downloading
+
+- **The LDraw All-In-One Installer** — Studio and LPub3D both bundle the
+  parts library. Installing it separately just creates a second copy and
+  path confusion.
+- **LEGO Digital Designer** — discontinued, replaced by Studio.
 
 ---
 
-## Stage 1: bake texture to LEGO colours
+# 2. Set up your folder
 
-Per face:
-
-1. Sample the texture at the face's UV centroid **plus five points at 55% of
-   the way from centroid toward each vertex**. Take the median.
-   Sampling the centroid alone catches the black outline strokes that most
-   atlases draw around each island and drags everything toward black.
-2. Flip V: `py = (1 - v) * height`. OBJ origin is bottom-left, images are
-   top-left.
-3. Convert sample and palette to **CIELab**, match nearest by Euclidean
-   distance. RGB distance picks visibly wrong colours.
-4. Write a new OBJ, `usemtl` per colour, plus a matching MTL with flat `Kd`.
-
-Report the colour distribution weighted by **3D face area**, not face count.
-Face count lies badly: a texture-dense region of tiny faces will dominate the
-count while covering almost none of the model.
-
-Palette to match against (BrickLink name, LDraw id, sRGB):
+Make one folder and keep everything in it.
 
 ```
-Black                0    #05131D     Dark Orange     484  #A95500
-Dark Bluish Gray     72   #6C6E68     Orange           25  #FE8A18
-Light Bluish Gray    71   #A0A5A9     Reddish Brown    70  #582A12
-White                15   #FFFFFF     Dark Red        320  #720E0F
-Red                  4    #C91A09     Dark Brown      308  #352100
-Sand Blue            379  #6074A1     Light Aqua      323  #ADC3C0
-Medium Nougat        84   #AA7D55     Yellow           14  #F2CD37
+Leveler/
+├── Leveler_LEGO.obj              <- 3D model with LEGO colours baked in
+├── Leveler_LEGO.mtl              <- colours for the OBJ (must stay beside it)
+├── Leveler_32studs.ldr           <- the buildable model
+├── Leveler_32studs_technic.ldr   <- same, with Technic parts added
+├── Leveler_32studs_sectioned.mpd <- same, split up for instructions
+├── Leveler_32studs_parts.csv     <- the shopping list
+└── view_side.png                 <- reference renders
 ```
 
-Expect four or five colours to carry 95%+ of the surface. Anything under
-0.5% is texture detail smaller than a stud: tell the user to drop it and use
-the neighbouring colour. Twenty extra BrickLink lots for invisible pieces is
-pure shipping cost.
+**Two rules:**
+
+1. **Never rename the `.mtl`.** The OBJ's first line points at it by name.
+   Rename it and the colours silently disappear.
+2. **Avoid spaces and odd characters in the folder path.** Some LDraw tools
+   still break on them. `C:\LEGO\Leveler\` is safe.
+   `C:\Users\Jim\My Stuff\LEGO (new)\` is asking for trouble.
 
 ---
 
-## Stage 2: choose a scale
+# 3. Every file type, and what to do with it
 
-The grid is **anisotropic** and which one you use depends on the build type:
+## `.obj` — the 3D model
 
-| Build type | X, Z | Y |
+Plain text geometry: every vertex, face and texture coordinate as numbers.
+This is the raw shape before it becomes LEGO.
+
+**Just look at it:**
+Double click. Windows opens it in 3D Viewer, macOS in Preview. Drag to
+rotate. That is all these do — you cannot change anything.
+
+**Turn it into LEGO bricks:**
+
+1. Open Studio
+2. File → Import → Import Model
+3. Pick the `.obj`
+4. A dialog appears asking for size. **Enter the size in studs on the
+   longest axis.** Start at 32.
+5. Studio builds the brick version. This takes a minute.
+6. If it looks too coarse, undo and try a bigger number. If your part count
+   is frightening, try a smaller one.
+
+**If it imports grey:** the `.mtl` is missing, renamed, or in a different
+folder. Fix that and re-import.
+
+## `.mtl` — the colour definitions
+
+A short text file listing colours. You never open it directly and you never
+edit it.
+
+It only has to do two things: sit in the same folder as the `.obj`, and keep
+its original filename.
+
+## `.ldr` — the LEGO model
+
+LDraw format. One line per brick, listing colour, position, rotation and
+part number. This is the actual buildable model — no more mesh, no more
+triangles, just bricks.
+
+**Open it:** Studio → File → Open. Or LeoCAD, or LPub3D.
+
+**Rotate and inspect:** right-drag to orbit, scroll to zoom. Walk around it
+before you spend money.
+
+**Get a parts list out:**
+File → Export As → CSV. Opens in Excel.
+
+**Get a shopping list out:**
+File → Export As → BrickLink Wanted List. This produces an XML file you
+upload to BrickLink.
+
+**Check for problems:**
+Studio highlights parts that are not properly connected. On a voxel model
+there will be plenty. That is expected — see section 6.
+
+## `.mpd` — the LEGO model, in sections
+
+Multi-Part Document. The same thing as `.ldr`, but holding several
+sub-models in one file, plus a main file that assembles them.
+
+Opens in exactly the same programs. Studio shows the sections as a tree down
+the left side and you can click into each one.
+
+**Use the `.mpd`, not the `.ldr`, whenever you are making instructions.**
+
+Why it matters: the `.ldr` is one enormous object. The instruction tool
+frames the entire model on every single page, so the picture is tiny, sits
+diagonally, and runs off the edge of the page. The `.mpd` frames one
+section at a time and the pictures come out the right size.
+
+## `.csv` — the parts list
+
+A spreadsheet. Columns: BrickLink item number, part name, colour, quantity.
+
+**Open it:** Excel, Numbers, Google Sheets. Or double click.
+
+**Use it for:** budgeting, printing a picking list, checking against what
+you already own.
+
+**Do NOT upload it to BrickLink.** BrickLink's Wanted List uploader wants
+XML, not CSV. Use one of the two routes in section 4 instead.
+
+## `.png` — reference renders
+
+Side and front views of the model. Any image viewer.
+
+Look at these **before** you order anything. If the shape does not read at
+this size, no amount of correct part numbers will fix it.
+
+## `.zip`
+
+Right click → Extract All (Windows) or double click (macOS). Extract it
+into your project folder before doing anything else. Do not try to open
+files from inside a zip.
+
+---
+
+# 4. The full workflow
+
+## Step 1 — Look at the renders
+
+Open the `.png` files. Does it look like the thing? Is it recognisable?
+
+If not, stop here and change the scale. Everything downstream is wasted
+effort otherwise.
+
+## Step 2 — Open the model and walk around it
+
+Studio → File → Open → the `.ldr`.
+
+Right-drag to orbit. Look at it from every angle. This is your last chance
+to change your mind cheaply.
+
+## Step 3 — Work out what it costs
+
+Studio → File → Export As → CSV. Open in Excel.
+
+Sort by quantity. The top ten lines are most of your money. Look at the
+colours — if there is one unusual colour with a big count, that is your cost
+driver and section 5 tells you what to do about it.
+
+## Step 4 — Find the cheapest way to buy it
+
+**This is the step that saves the most money. Do not skip it.**
+
+1. Go to rebrickable.com, sign in
+2. My Part Lists → Create a new list
+3. Import → upload your `.ldr` or `.mpd` **directly** (Rebrickable reads
+   LDraw files natively — the CSV is not needed)
+4. Once imported, use **Multi-Buy**
+5. Set it to prefer Australian sellers
+6. It returns a shopping plan: which stores, which parts, total including
+   postage
+
+Ordering naively by cheapest-price-per-part puts you in fifty or sixty
+stores at $6 to $12 postage each. Multi-Buy will typically get the same
+parts from a dozen. On a 500-part build that is $150 saved. On a big one it
+is over a thousand.
+
+## Step 5 — Order
+
+Follow Multi-Buy's plan. Place each store order separately on BrickLink.
+
+**Set condition to Used** unless you have a reason not to. Used is 40 to 60%
+cheaper and, for a model that will sit on a shelf, indistinguishable.
+
+**Watch the $1,000 line.** Imported orders under AUD 1,000 have GST taken at
+checkout and arrive normally. Over AUD 1,000 they stop at the border for
+duty, GST and a processing charge, adding one to three weeks. If one
+overseas order is creeping toward $1,000, split it in two.
+
+Expect two to six weeks. Australian sellers are much faster.
+
+## Step 6 — Make the instructions
+
+While you wait for parts.
+
+1. Studio → File → Open → the **`.mpd`**
+2. Switch to the **Instruction Maker** tab
+3. **Set the page to landscape** before anything else
+4. Click **Lock Page** to unlock the page elements
+5. Click **Change Layout** and pick a preset with the parts callout in a
+   corner or a top strip, not the centre
+6. Drag the callout box clear of the model image
+7. **Apply the layout to all pages now** — Preferences → Instruction Maker.
+   If you skip this you will drag several hundred boxes by hand.
+8. Export → PDF
+
+If you want better output, open the same `.mpd` in LPub3D instead. It gives
+you a cover page, part callouts and a bill of materials, at the cost of more
+setup.
+
+## Step 7 — Sort and build
+
+Parts arrive in dozens of small bags from different sellers.
+
+Sort by **part and colour**, not by bag. Egg cartons, ice cube trays, a
+tackle box, whatever. An hour sorting saves three hours hunting.
+
+Then work through the PDF.
+
+---
+
+# 5. Making it cheaper
+
+Ranked by how much they save.
+
+| # | What | Saves |
 |---|---|---|
-| Bricks | 8 mm | 9.6 mm |
-| Plates (3x the vertical detail) | 8 mm | 3.2 mm |
-| Studless Technic | 8 mm | 8 mm |
+| 1 | Rebrickable Multi-Buy before ordering | up to 40% of total |
+| 2 | Scale down — cost tracks the **square** of length | 48→32 studs is 54% off |
+| 3 | Bulk used LEGO by the kilo, Gumtree / Marketplace / eBay AU, $25-45/kg | 60-70% |
+| 4 | Buy Used, not New, on BrickLink | 40-60% |
+| 5 | Bricks instead of plates | about 65% |
+| 6 | Cut to three colours | fewer lots, fewer stores |
+| 7 | Substitute the one expensive colour for a common one | varies, often 20% |
+| 8 | Delete the underside (nobody sees it) | 15-25% |
+| 9 | Skip the Technic on version one | about 30% |
+| 10 | Buy a junk donor set for bulk parts like tread links | 30-50% on those parts |
+| 11 | LEGO Pick a Brick (lego.com.au) for high-quantity commons | one postage charge |
+| 12 | Rebrickable checks your list against sets you already own | free parts |
 
-Using a cubic grid gives a vertically stretched model. This is the single
-most common mistake.
+Two things to ask the AI for, which cut cost at the file level:
 
-**Check the sub-assembly, not the whole object.** Measure the part the user
-actually cares about. If half the length is an arm or a tail, the body is
-only half the stated size, and the body is what has to read.
+> Penalise 1x1 and 1x2 footprints in the packing. Prefer 1x4 and larger.
 
-Rules of thumb:
+1x1 parts are the worst value per volume in the system and often 30% of the
+count.
 
-- Below ~32 studs on the long axis, silhouette detail dies
-- Working Technic tracks need a track bay at least 4 studs tall
-- Report the resulting mm dimensions and part count before committing
+> Remove all cells on the lowest layer and any cell whose only exposed face
+> points downward.
 
----
+Nobody sees the bottom.
 
-## Stage 3: voxelise the surface
-
-Point-sample each triangle into the grid. Sample density: at least two
-samples per grid cell along the longest edge. Assign each cell the modal
-colour of the samples landing in it.
-
-Surface only. Do not solid-fill: most downloaded meshes are not watertight,
-and a hollow shell is what you build anyway.
-
----
-
-## Stage 4: pack cells into real parts
-
-Per layer, per colour, greedy scan order, largest legal footprint first.
-
-**Bricks** (LDraw part numbers):
-
-```
-1x1  3005    1x2  3004    1x3  3622    1x4  3010    1x6  3009
-1x8  3008    1x10 6111    1x12 6112    1x16 2465
-2x2  3003    2x3  3002    2x4  3001    2x6  2456    2x8  3007
-2x10 3006    4x6  2356    4x10 6212    4x12 4202
-```
-
-**Plates**:
-
-```
-1x1  3024    1x2  3023    1x3  3623    1x4  3710    1x6  3666
-1x8  3460    1x10 4477    1x12 60479
-2x2  3022    2x3  3021    2x4  3020    2x6  3795    2x8  3034
-2x10 3832    2x12 2445    2x16 4282
-4x4  3031    4x6  3032    4x8  3035    4x10 3030    4x12 3029
-6x6  3958    6x8  3036    6x10 3033    6x12 3028    6x16 3027
-8x8  41539   8x16 92438
-```
-
-**There is no 4x4 brick.** A 4x4 plate exists, the brick does not. Never
-emit a footprint that is not in the table above.
+**The cheapest genuinely good build:** 24 to 32 studs, bricks not plates,
+three colours from a bulk kilo lot, underside deleted, no Technic. About
+**AUD 25 to 45 all in**, roughly 300 parts, 30 to 40 steps.
 
 ---
 
-## Stage 5: emit LDraw
+# 6. Troubleshooting
 
-```
-1 stud     = 20 LDU        brick course = 24 LDU
-plate      =  8 LDU        -Y is up
-```
+| Problem | Cause | Fix |
+|---|---|---|
+| OBJ imports grey | `.mtl` missing, renamed, or in another folder | Put it beside the OBJ with its original name |
+| Model looks vertically stretched | Cubic voxel grid was used | Bricks need 8 / 9.6 / 8 mm, not 8 / 8 / 8 |
+| Instruction pictures tiny and cut off | You opened the `.ldr` | Open the `.mpd` instead |
+| Parts callout sits on top of the model | Default centred layout | Unlock page, Change Layout, apply to all |
+| Hundreds of "not connected" warnings | It is a hollow one-brick shell | Expected. See below. |
+| A step asks for a brick with nothing under it | Same reason | Expected. See below. |
+| BrickLink rejects the CSV | It wants XML | Use Rebrickable, or export a Wanted List from Studio |
+| Order held at customs | Over AUD 1,000 | Split into two orders next time |
+| A part number does not exist on BrickLink | LDraw and BrickLink number some parts differently | e.g. gear `3648b` in LDraw is `3648` on BrickLink |
+| Studio very slow | Model over ~5,000 parts | Use the sectioned `.mpd` and work one section at a time |
 
-Part origin sits at the centre of the footprint on the **bottom** face, so a
-part on layer `k` goes at `Y = -24*k` (bricks) or `-8*k` (plates).
+## About the floating bricks
 
-Line format:
+The model is a **hollow shell, one brick thick**. It has no internal
+structure, so some pieces have nothing beneath them.
 
-```
-1 <colour> <x> <y> <z> <a b c d e f g h i> <part>.dat
-```
+This is not a bug in the files. It is what surface voxelisation produces,
+and it is why the part count is as low as it is.
 
-Rotation 90 degrees about Y, for parts whose long axis must run along Z:
+Working out how to hold those pieces up — adding a plate underneath, running
+a longer brick across a gap, bracing from inside — is the only part of this
+build where you have to actually think. It is also the part worth doing with
+a kid, because it is real problem solving rather than following a diagram.
 
-```
-0 0 1 0 1 0 -1 0 0
-```
+Budget 30 to 50% extra parts if you want the finished thing to be sturdy
+rather than fragile.
 
 ---
 
-## Stage 6: Technic, if the user wants moving parts
+# 7. Glossary
 
-Technic is skeleton and skin, not volume. There is no Technic equivalent of
-"fill this cell". Do not try to convert a voxel grid into Technic. Use
-Technic **only where something has to move**, and keep bricks elsewhere.
-
-**Thick liftarms come in odd lengths only**, plus 1x2:
-
-```
-1x2  43857   1x3  32523   1x5  32316   1x7  32524
-1x9  40490   1x11 32525   1x13 41239   1x15 32278
-```
-
-There is no thick 1x4, 1x6 or 1x8. Watch out for 32063: that is Liftarm
-**Thin** 1x6, half the width, and it will not sit in a thick frame.
-
-**Never guess a Technic part's orientation or size.** Fetch the real LDraw
-file and measure its bounding box:
-
-```
-https://raw.githubusercontent.com/gkjohnson/ldraw-parts-library/master/complete/ldraw/parts/<part>.dat
-```
-
-Measured facts worth keeping:
-
-| Part | Fact |
+| Term | Meaning |
 |---|---|
-| Gear 24T `3648b` | lies in XY, axis along **Z**, outer radius 27.04 LDU |
-| Link Tread `3873` | 52 LDU wide, pitch **16 LDU**, chains along Z |
-| Thick liftarms | long axis **Z**, origin at centre |
-| Technic bricks `3700/3701/3894` | long axis **X**, hole axis Z, origin at bottom |
-| Axles `3705`, `4519` | axis along **X** |
-
-Note the tread pitch. It is 16 LDU, not one stud. Track link count is
-`perimeter / 16`, and perimeter is `2 * straight + 2 * pi * R`.
-
-Powered Up, if motorising: Technic Hub **88012** has four ports, so four
-functions. Large Motor **88013**, XL Motor **88014**.
-
-Sanity check at large scale: LEGO's biggest gear is about 3.4 studs across.
-If the loop needs a sprocket bigger than that, it has to be built from beams,
-not ordered as a part.
-
----
-
-## Stage 7: instructions
-
-Auto-generation only works if the file has structure. A flat parts list
-produces either one step or one step per part.
-
-**Insert `0 STEP` markers.** Bottom layer up, front to back within a layer,
-about 10 to 20 parts per step. Group any Technic sub-assemblies together at
-the end rather than scattering them through the body.
-
-**Split into `.mpd` submodels** for anything over ~500 parts. Cut the model
-into sections along the long axis, each a `0 FILE section_NN.ldr`, assembled
-by the main file. Without this, the instruction tool frames the entire model
-on every page, so the step image is tiny, diagonal, and runs off the edge.
-
-Target roughly 16 studs per section.
-
-Then, in **Bricklink Studio** (free):
-
-1. Open the `.mpd`
-2. Instruction Maker
-3. Unlock the page, use **Change Layout** to move the parts callout out of
-   the centre, set landscape
-4. Apply the layout to all pages **before** generating, or you will drag
-   several hundred boxes by hand
-5. Export PDF
-
-**LPub3D** (free, open source) gives better output: proper callouts, running
-bill of materials, cover page. More setup.
+| **Stud** | The bump on top of a brick. Also the unit of size: 1 stud = 8 mm |
+| **Plate** | A thin brick. Three plates stacked = one brick tall |
+| **LDU** | LDraw Unit. 1 stud = 20 LDU, 1 brick tall = 24 LDU, 1 plate = 8 LDU |
+| **LDraw** | The open file format for LEGO models. `.ldr` and `.mpd` |
+| **MOC** | My Own Creation. A model that is not an official set |
+| **BOM** | Bill of Materials. The parts list |
+| **Lot** | One part in one colour from one seller. 20 lots = 20 line items |
+| **Part out** | Splitting a set into individual parts |
+| **Voxelise** | Convert a smooth 3D shape into a grid of cubes, then into bricks |
+| **SNOT** | Studs Not On Top. Building sideways for smoother surfaces |
+| **Technic** | The beam-and-pin system. Frames and mechanisms, not solid shapes |
+| **Powered Up** | LEGO's current motor and hub system, app controlled |
+| **Wanted List** | A BrickLink shopping list you can match against sellers |
+| **Multi-Buy** | Rebrickable's tool for finding the cheapest store split |
 
 ---
 
-## Stage 8: tell the user the truth
-
-Always report, unprompted:
-
-- **It is a hollow shell.** One part thick, no internal structure, some parts
-  floating. Add 30 to 50% for internal support before treating counts as
-  final.
-- **Which colour is the cost driver.** Rare colours in small elements cost
-  several times common ones and force orders across dozens of stores.
-- **What voxelising cannot do.** It produces a blocky proxy, not a designed
-  model. Compound curves, SNOT, and anything mechanical are hand design.
-  The output is a shape and a shopping list, and that is a real head start,
-  but it is not a finished MOC.
-
----
-
-## Cost model
-
-Common parts run roughly USD 0.05 to 0.15 each used. Rare colours run three
-to five times that. Add USD 4 to 8 per BrickLink store, and a big build
-spans 40 or more stores, so shipping is often 20% of the total.
-
-Rough bands, from a build actually run through this pipeline:
-
-| Scale | Parts | Ballpark |
-|---|---|---|
-| 24 studs | ~270 | build from the tub, order nothing |
-| 32 studs + working Technic | ~510 | USD 40 to 60 |
-| 96 studs, plates, motorised | ~11,000 | USD 1,800 to 2,500 |
-
----
-
-## Checklist
+# 8. Quick reference
 
 ```
-[ ] reported bbox, groups, materials, UV validity before coding
-[ ] handled the missing or useless MTL
-[ ] baked colour from the texture, not from materials
-[ ] used CIELab, not RGB, for palette matching
-[ ] reported colour split by area, not face count
-[ ] used the correct anisotropic grid for the build type
-[ ] checked the sub-assembly size, not just overall length
-[ ] emitted only footprints that exist as real parts
-[ ] fetched and measured any Technic part before placing it
-[ ] inserted STEP markers in a sensible build order
-[ ] split to MPD sections if over ~500 parts
-[ ] stated the shell caveat and the cost driver
+DOWNLOAD
+  Bricklink Studio   https://www.bricklink.com/v3/studio/download.page
+  Rebrickable        https://rebrickable.com          (account only)
+  BrickLink          https://www.bricklink.com        (account only)
+  LPub3D  optional   https://trevorsandy.github.io/lpub3d/
+  LeoCAD  optional   https://www.leocad.org
+
+OPEN WITH
+  .obj  .mtl   Studio (File > Import > Import Model)
+  .ldr         Studio (File > Open), LeoCAD, LPub3D
+  .mpd         same — use this one for instructions
+  .csv         Excel / Sheets
+  .png         any image viewer
+
+ORDER
+  Rebrickable > Import the .ldr > Multi-Buy > prefer AU sellers > BrickLink
+
+INSTRUCTIONS
+  Studio > open the .mpd > Instruction Maker > landscape >
+  unlock page > Change Layout > apply to all > Export PDF
 ```
